@@ -4,3 +4,5 @@ scikit-learn
 joblib
 huggingface_hub
 numpy
+datasets
+mlflow
