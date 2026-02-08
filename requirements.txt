@@ -9,3 +9,4 @@ mlflow
 xgboost
 matplotlib
 seaborn
+setuptools<70
