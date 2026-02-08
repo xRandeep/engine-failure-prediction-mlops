@@ -1,7 +1,7 @@
 # 🚛 Engine Failure Prediction System (MLOps Capstone)
 
-[![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Live%20App-yellow)](https://huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME)
-[![ML Pipeline](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/actions/workflows/pipeline.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/actions)
+[![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Live%20App-yellow)](https://huggingface.co/spaces/iStillWaters/YOUR_SPACE_NAME)
+[![ML Pipeline](https://github.com/xRandeep/engine-failure-prediction-mlops/actions/workflows/pipeline.yml/badge.svg)](https://github.com/xRandeep/engine-failure-prediction-mlops/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## 📌 Project Overview
