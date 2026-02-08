@@ -2,7 +2,11 @@ import streamlit as st
 import pandas as pd
 import joblib
 import os
+import sklearn  # Explicit import prevents some joblib errors
 from huggingface_hub import hf_hub_download
+
+# --- 1. PAGE CONFIG (MUST BE FIRST) ---
+st.set_page_config(page_title="Engine Failure Prediction", page_icon="🚛")
 
 # --- CONFIGURATION ---
 HF_USERNAME = os.getenv("HF_USERNAME", "iStillWaters")
@@ -37,13 +41,14 @@ def load_artifacts():
         
         return model, scaler
     except Exception as e:
-        st.error(f"❌ Error loading artifacts: {e}")
+        # We cannot use st.error here easily if it's cached, so we print to logs
+        print(f"❌ Error loading artifacts: {e}")
         return None, None
 
+# Load them now
 model, scaler = load_artifacts()
 
 # --- UI LAYOUT ---
-st.set_page_config(page_title="Engine Failure Prediction", page_icon="🚛")
 st.title("🚛 Engine Failure Prediction System")
 st.markdown(f"**Model Source:** `{MODEL_REPO_ID}`")
 st.markdown("Enter real-time sensor data to predict engine health status.")
@@ -54,7 +59,6 @@ with st.form("prediction_form"):
     col1, col2 = st.columns(2)
     
     with col1:
-        # We use keys to ensure we can map them back correctly
         rpm = st.number_input("Engine RPM", min_value=0, max_value=10000, value=2000)
         lub_oil_p = st.number_input("Lub Oil Pressure", min_value=0.0, max_value=10.0, value=4.5)
         fuel_p = st.number_input("Fuel Pressure", min_value=0.0, max_value=20.0, value=7.0)
@@ -69,10 +73,9 @@ with st.form("prediction_form"):
 # --- PREDICTION LOGIC ---
 if submit_button:
     if model is None or scaler is None:
-        st.error("Cannot predict: Model or Scaler not loaded.")
+        st.error("Cannot predict: Model or Scaler not loaded. Check HF Space Logs.")
     else:
-        # 1. Create Dataframe (Raw Inputs)
-        # MAP INPUTS TO EXACT COLUMN NAMES
+        # 1. Create Dataframe
         input_data = pd.DataFrame({
             'Engine rpm': [rpm],
             'Lub oil pressure': [lub_oil_p],
@@ -82,24 +85,22 @@ if submit_button:
             'Coolant temp': [coolant_t]
         })
         
-        # 2. Reorder Columns (Safety Step)
-        # Ensures columns are in the exact order the model expects
+        # 2. Reorder Columns
         input_data = input_data[EXPECTED_FEATURES]
         
         try:
-            # 3. Scale the Data
+            # 3. Scale
             scaled_data = scaler.transform(input_data)
             
             # 4. Predict
             prediction = model.predict(scaled_data)[0]
             
-            # Handle Probability (Some models like SVM don't support it by default, but trees do)
             try:
                 probability = model.predict_proba(scaled_data)[0][1]
             except:
-                probability = 0.0 # Fallback if model doesn't support probability
+                probability = 0.0
             
-            # 5. Display Result
+            # 5. Display
             st.divider()
             if prediction == 1:
                 st.error(f"🚨 CRITICAL WARNING: Engine Failure Predicted!")
