@@ -12,7 +12,17 @@ MODEL_REPO_ID = f"{HF_USERNAME}/{MODEL_REPO_NAME}"
 MODEL_FILENAME = "best_engine_model.pkl"
 SCALER_FILENAME = "scaler.joblib"
 
-# --- LOAD MODEL & SCALER (Cached for Speed) ---
+# CRITICAL: Must match the order in process_data.py exactly!
+EXPECTED_FEATURES = [
+    'Engine rpm', 
+    'Lub oil pressure', 
+    'Fuel pressure', 
+    'Coolant pressure', 
+    'lub oil temp', 
+    'Coolant temp'
+]
+
+# --- LOAD MODEL & SCALER ---
 @st.cache_resource
 def load_artifacts():
     print(f"Loading artifacts from {MODEL_REPO_ID}...")
@@ -27,7 +37,7 @@ def load_artifacts():
         
         return model, scaler
     except Exception as e:
-        st.error(f"❌ Error loading model/scaler from Hugging Face: {e}")
+        st.error(f"❌ Error loading artifacts: {e}")
         return None, None
 
 model, scaler = load_artifacts()
@@ -44,14 +54,15 @@ with st.form("prediction_form"):
     col1, col2 = st.columns(2)
     
     with col1:
+        # We use keys to ensure we can map them back correctly
         rpm = st.number_input("Engine RPM", min_value=0, max_value=10000, value=2000)
-        lub_oil_pressure = st.number_input("Lub Oil Pressure", min_value=0.0, max_value=10.0, value=4.5)
-        fuel_pressure = st.number_input("Fuel Pressure", min_value=0.0, max_value=20.0, value=7.0)
+        lub_oil_p = st.number_input("Lub Oil Pressure", min_value=0.0, max_value=10.0, value=4.5)
+        fuel_p = st.number_input("Fuel Pressure", min_value=0.0, max_value=20.0, value=7.0)
     
     with col2:
-        coolant_pressure = st.number_input("Coolant Pressure", min_value=0.0, max_value=10.0, value=3.0)
-        lub_oil_temp = st.number_input("Lub Oil Temp (°C)", min_value=0.0, max_value=150.0, value=75.0)
-        coolant_temp = st.number_input("Coolant Temp (°C)", min_value=0.0, max_value=150.0, value=80.0)
+        coolant_p = st.number_input("Coolant Pressure", min_value=0.0, max_value=10.0, value=3.0)
+        lub_oil_t = st.number_input("Lub Oil Temp (°C)", min_value=0.0, max_value=150.0, value=75.0)
+        coolant_t = st.number_input("Coolant Temp (°C)", min_value=0.0, max_value=150.0, value=80.0)
     
     submit_button = st.form_submit_button("Predict Engine Status")
 
@@ -60,29 +71,35 @@ if submit_button:
     if model is None or scaler is None:
         st.error("Cannot predict: Model or Scaler not loaded.")
     else:
-        # 1. Create Dataframe from Inputs (Must match training columns!)
+        # 1. Create Dataframe (Raw Inputs)
+        # MAP INPUTS TO EXACT COLUMN NAMES
         input_data = pd.DataFrame({
             'Engine rpm': [rpm],
-            'Lub oil pressure': [lub_oil_pressure],
-            'Fuel pressure': [fuel_pressure],
-            'Coolant pressure': [coolant_pressure],
-            'lub oil temp': [lub_oil_temp],
-            'Coolant temp': [coolant_temp]
+            'Lub oil pressure': [lub_oil_p],
+            'Fuel pressure': [fuel_p],
+            'Coolant pressure': [coolant_p],
+            'lub oil temp': [lub_oil_t],
+            'Coolant temp': [coolant_t]
         })
         
+        # 2. Reorder Columns (Safety Step)
+        # Ensures columns are in the exact order the model expects
+        input_data = input_data[EXPECTED_FEATURES]
+        
         try:
-            # 2. Scale the Data
+            # 3. Scale the Data
             scaled_data = scaler.transform(input_data)
             
-            # 3. Predict
+            # 4. Predict
             prediction = model.predict(scaled_data)[0]
-            # Handle probability - some models don't support predict_proba
+            
+            # Handle Probability (Some models like SVM don't support it by default, but trees do)
             try:
                 probability = model.predict_proba(scaled_data)[0][1]
             except:
-                probability = 0.0
+                probability = 0.0 # Fallback if model doesn't support probability
             
-            # 4. Display Result
+            # 5. Display Result
             st.divider()
             if prediction == 1:
                 st.error(f"🚨 CRITICAL WARNING: Engine Failure Predicted!")

@@ -1,44 +1,67 @@
-name: End-to-End MLOps Pipeline
+name: Predictive Maintenance MLOps Pipeline
 
-# Trigger: Run on every push to the main branch
+# Trigger: Run on push to main OR manual button click
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: # Allows manual triggering button
+  workflow_dispatch:
 
 jobs:
   build-train-deploy:
     runs-on: ubuntu-latest
     
     steps:
-    # Step 1: Check out the code from GitHub
-    - name: Checkout Code
+    # 1. Checkout the Code
+    - name: Checkout Repository
       uses: actions/checkout@v3
 
-    # Step 2: Set up Python Environment
+    # 2. Set up Python
     - name: Set up Python 3.9
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
 
-    # Step 3: Install Dependencies
-    - name: Install Libraries
+    # 3. Install Dependencies
+    - name: Install Python Libraries
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest # If you have tests
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # Ensure MLOps libraries are installed
+        pip install huggingface_hub joblib scikit-learn pandas datasets mlflow
 
-    # Step 4: Run Model Training & Evaluation
-    # (This assumes you saved your notebook training logic into src/train.py)
-    - name: Execute ML Pipeline (Train & Register Model)
+    # 4. Register Raw Data (Ingestion)
+    - name: Register Raw Data to Hugging Face
       env:
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}  # Read token from GitHub Secrets
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        HF_USERNAME: "iStillWaters"
+        DATASET_REPO_NAME: "auto_predictive_maintenance_data"
+      run: |
+        python src/register_data.py
+
+    # 5. Run Data Processing
+    - name: Data Processing & Feature Engineering
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        HF_USERNAME: "iStillWaters"
+        DATASET_REPO_NAME: "auto_predictive_maintenance_data"
+      run: |
+        python src/process_data.py
+
+    # 6. Run Model Training
+    - name: Model Training & Registry
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        HF_USERNAME: "iStillWaters"
+        DATASET_REPO_NAME: "auto_predictive_maintenance_data"
+        MODEL_REPO_NAME: "auto_predictive_maintenance_model"
       run: |
         python src/train.py
 
-    # Step 5: Deploy App to Hugging Face Spaces
-    - name: Deploy to Spaces
+    # 7. Run App Deployment
+    - name: Deploy to Hugging Face Spaces
       env:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        HF_USERNAME: "iStillWaters"
+        SPACE_NAME: "Engine-Reliability-Dashboard"
       run: |
         python src/deploy.py
