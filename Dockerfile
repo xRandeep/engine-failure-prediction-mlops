@@ -1,17 +1,19 @@
-# Use official Python runtime as a parent image
+# Use a slim version of Python to save space
 FROM python:3.9-slim
 
-# Set the working directory to /app
+# Set working directory
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# Copy files
 COPY . /app
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+# CRITICAL FIX: --no-cache-dir prevents OOM (Out of Memory) crashes
+# We also upgrade pip first to ensure compatibility
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --upgrade -r requirements.txt
 
-# Make port 8501 available to the world outside this container
+# Expose the port
 EXPOSE 8501
 
-# Run app.py when the container launches
+# Run the app
 CMD ["streamlit", "run", "app.py", "--server.address=0.0.0.0", "--server.port=7860"]

@@ -4,9 +4,7 @@ numpy
 scikit-learn
 joblib
 huggingface_hub
-datasets
-mlflow
+# We keep xgboost just in case the model object needs it for unpickling, 
+# but we remove heavy viz libs like matplotlib/seaborn/mlflow
 xgboost
-matplotlib
-seaborn
 setuptools<70
