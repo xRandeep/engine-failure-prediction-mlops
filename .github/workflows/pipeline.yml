@@ -71,5 +71,5 @@ jobs:
       env:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
         HF_USERNAME: "iStillWaters"
-        SPACE_NAME: "Engine-Reliability-Dashboard-v2"
+        SPACE_NAME: "Engine-Reliability-Dashboard"
       run: python src/deploy.py
