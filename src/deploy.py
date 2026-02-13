@@ -5,7 +5,7 @@ from huggingface_hub import HfApi
 # --- CONFIGURATION ---
 # 1. User Configuration
 HF_USERNAME = os.getenv("HF_USERNAME", "iStillWaters")
-SPACE_NAME = os.getenv("SPACE_NAME", "Engine-Reliability-Dashboard-v2") 
+SPACE_NAME = os.getenv("SPACE_NAME", "Engine-Reliability-Dashboard") 
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 # 2. Construct The Space ID
