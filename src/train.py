@@ -88,7 +88,7 @@ def train_and_register():
             "params": {"n_estimators": [10, 50]}
         },
         "AdaBoost": {
-            "model": AdaBoostClassifier(algorithm='SAMME', random_state=42),
+            "model": AdaBoostClassifier(random_state=42),
             "params": {"n_estimators": [50, 100], "learning_rate": [0.1, 1.0]}
         },
         "Gradient_Boosting": {
