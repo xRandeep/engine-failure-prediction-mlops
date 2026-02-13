@@ -26,11 +26,13 @@ jobs:
             - 'src/process_data.py'
             - 'src/train.py'
             - 'requirements-dev.txt'
+            - '.github/workflows/pipeline.yml'
           app:
             - 'app.py'
             - 'Dockerfile'
             - 'requirements.txt'
             - 'src/deploy.py'
+            - '.github/workflows/pipeline.yml'
 
     # 3. Install Dependencies
     - name: Install Python Libraries
